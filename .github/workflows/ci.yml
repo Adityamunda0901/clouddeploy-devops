@@ -1,4 +1,4 @@
-name: CloudDeploy CI
+name: CloudDeploy CI/CD
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build-and-test:
+  build-test-push:
 
     runs-on: ubuntu-latest
 
@@ -29,7 +29,7 @@ jobs:
         working-directory: Backend
         run: npm ci
 
-      - name: Build Docker Compose application
+      - name: Build application
         run: docker compose build
 
       - name: Start application
@@ -38,17 +38,26 @@ jobs:
       - name: Wait for services
         run: sleep 10
 
-      - name: Check running containers
+      - name: Check containers
         run: docker compose ps
 
-      - name: Application health check
+      - name: Health check
         run: curl --fail http://localhost:5000/api/health
 
-      - name: Show logs on failure
-        if: failure()
-        run: docker compose logs
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/clouddeploy-backend:latest ./Backend
+
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/clouddeploy-backend:latest
 
       - name: Stop application
         if: always()
+        run: docker compose down -v
         run: docker compose down -v
 
