@@ -1,0 +1,47 @@
+name: CloudDeploy CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: Backend
+        run: npm ci
+
+      - name: Build Docker image
+        run: docker build -t clouddeploy-backend ./Backend
+
+      - name: Start application
+        run: |
+          docker run -d \
+            --name clouddeploy-test \
+            -p 5000:5000 \
+            clouddeploy-backend
+
+      - name: Wait for application
+        run: sleep 5
+
+      - name: Health check
+        run: curl --fail http://localhost:5000/api/healthname: CloudDeploy CI
+
