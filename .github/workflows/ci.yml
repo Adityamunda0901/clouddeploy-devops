@@ -66,7 +66,9 @@ jobs:
 
       # 11. Test frontend
       - name: Frontend health check
-        run: curl --fail http://localhost:3000
+        run: curl --fail http://localhost:80
+
+
 
       # 12. Login to Docker Hub
       - name: Login to Docker Hub
