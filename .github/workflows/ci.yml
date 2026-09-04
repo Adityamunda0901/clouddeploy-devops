@@ -126,7 +126,7 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "i-0599d3cc934be98f2" \
             --document-name "AWS-RunShellScript" \
-            --parameters 'commands=["cd ~/clouddeploy-devops","git pull origin main","docker compose up -d --build"]' \
+            --parameters 'commands=["sudo -u ubuntu -H bash -lc '\''cd /home/ubuntu/clouddeploy-devops && git pull origin main'\'','\''cd /home/ubuntu/clouddeploy-devops && docker compose up -d --build'\'']' \
             --query "Command.CommandId" \
             --output text)
 
