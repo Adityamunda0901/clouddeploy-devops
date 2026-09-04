@@ -108,7 +108,25 @@ jobs:
           docker push \
             ${{ secrets.DOCKERHUB_USERNAME }}/clouddeploy-frontend:latest
 
-      # 17. Clean up test environment
-      - name: Stop application
-        if: always()
-        run: docker compose down -v
+      # 17. Deploy to AWS EC2
+      - name: Deploy to AWS EC2
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+        chmod 600 ~/.ssh/known_hosts
+
+        echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key
+        chmod 600 ec2_key
+
+        ssh -i ec2_key ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          cd ~/clouddeploy-devops
+          git pull origin main
+          docker compose up -d --build
+        EOF
+
+        rm -f ec2_key
+      # 18. Clean up test environment
+     - name: Stop application
+     if: always()
+     run: docker compose down -v
